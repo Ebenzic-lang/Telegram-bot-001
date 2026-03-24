@@ -1,7 +1,18 @@
+import telebot
 import os
 from flask import Flask
 from threading import Thread
-import telebot
+
+# ================= CONFIG =================
+TOKEN = "8775829572:AAH-DhSCQU-oEFi25XFHcLNBJcNYgjh8KDM"
+CHANNEL_USERNAME = "@Vipwinningsignals"
+AFFILIATE_LINK = "https://t.me/gemzcoin_bot/playfun?startapp=eyJzIjoidGVsZWdyYW0iLCJtIjoiYm90IiwiZiI6ImJyb2FkY2FzdCJ9"
+SUPPORT_LINK = "https://t.me/Vipwinningsignals"
+# ==========================================
+
+bot = telebot.TeleBot(TOKEN)
+
+# ============ KEEP ALIVE (FOR RENDER FREE) ============
 app = Flask(__name__)
 
 @app.route('/')
@@ -16,11 +27,7 @@ def keep_alive():
     t = Thread(target=run_web)
     t.start()
 
-TOKEN = "8775829572:AAFjk7qEfh5-J3DMXDFrVD2gLJQ3TwKs6pg"
-CHANNEL_USERNAME = "@Vipwinningsignals"  # e.g @vipalerts
-
-bot = telebot.TeleBot(TOKEN)
-
+# ============ CHECK USER JOIN ============
 def check_user(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
@@ -28,11 +35,18 @@ def check_user(user_id):
     except:
         return False
 
+# ============ START COMMAND ============
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = telebot.types.InlineKeyboardMarkup()
-    join_btn = telebot.types.InlineKeyboardButton("✅ Join Channel", url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}")
-    check_btn = telebot.types.InlineKeyboardButton("🔓 I Joined (Unlock)", callback_data="check")
+    join_btn = telebot.types.InlineKeyboardButton(
+        "✅ Join Channel",
+        url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}"
+    )
+    check_btn = telebot.types.InlineKeyboardButton(
+        "🔓 I Joined (Unlock)",
+        callback_data="check"
+    )
 
     markup.add(join_btn)
     markup.add(check_btn)
@@ -43,15 +57,17 @@ def start(message):
         reply_markup=markup
     )
 
+# ============ BUTTON HANDLER ============
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
+
     if call.data == "check":
         if check_user(call.from_user.id):
 
             markup = telebot.types.InlineKeyboardMarkup()
-            play_btn = telebot.types.InlineKeyboardButton("🎰 Play Now", url="https://t.me/gemzcoin_bot/playfun?startapp=eyJzIjoidGVsZWdyYW0iLCJtIjoiYm90IiwiZiI6ImJyb2FkY2FzdCJ9")
+            play_btn = telebot.types.InlineKeyboardButton("🎰 Play Now", url=AFFILIATE_LINK)
             offer_btn = telebot.types.InlineKeyboardButton("🎁 Today’s Offer", callback_data="offer")
-            support_btn = telebot.types.InlineKeyboardButton("💬 Support", url="https://t.me/Vipwinningsignals")
+            support_btn = telebot.types.InlineKeyboardButton("💬 Support", url=SUPPORT_LINK)
 
             markup.add(play_btn)
             markup.add(offer_btn)
@@ -66,13 +82,19 @@ def callback(call):
 
         else:
             markup = telebot.types.InlineKeyboardMarkup()
-            join_btn = telebot.types.InlineKeyboardButton("✅ Join Channel", url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}")
-            retry_btn = telebot.types.InlineKeyboardButton("🔓 Try Unlock Again", callback_data="check")
+            join_btn = telebot.types.InlineKeyboardButton(
+                "✅ Join Channel",
+                url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}"
+            )
+            retry_btn = telebot.types.InlineKeyboardButton(
+                "🔓 Try Unlock Again",
+                callback_data="check"
+            )
 
             markup.add(join_btn)
             markup.add(retry_btn)
 
-            bot.answer_callback_query(call.id, "You must join first!")
+            bot.answer_callback_query(call.id, "Join channel first!")
 
             bot.send_message(
                 call.message.chat.id,
@@ -82,7 +104,7 @@ def callback(call):
 
     elif call.data == "offer":
         markup = telebot.types.InlineKeyboardMarkup()
-        play_btn = telebot.types.InlineKeyboardButton("🎰 Play Now", url="https://t.me/gemzcoin_bot/playfun?startapp=eyJzIjoidGVsZWdyYW0iLCJtIjoiYm90IiwiZiI6ImJyb2FkY2FzdCJ9")
+        play_btn = telebot.types.InlineKeyboardButton("🎰 Play Now", url=AFFILIATE_LINK)
         back_btn = telebot.types.InlineKeyboardButton("🔙 Back", callback_data="check")
 
         markup.add(play_btn)
@@ -94,5 +116,7 @@ def callback(call):
             call.message.message_id,
             reply_markup=markup
         )
+
+# ============ RUN ============
 keep_alive()
 bot.infinity_polling()
