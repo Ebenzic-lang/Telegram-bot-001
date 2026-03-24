@@ -1,18 +1,22 @@
 import telebot
 import os
+import time
 from flask import Flask
 from threading import Thread
 
 # ================= CONFIG =================
-TOKEN = "8775829572:AAH-DhSCQU-oEFi25XFHcLNBJcNYgjh8KDM"
+TOKEN = "8795075971:AAFf2oUcuES7Fu6Vzq6Hx10b53bWr4NSAgo"
 CHANNEL_USERNAME = "@Vipwinningsignals"
 AFFILIATE_LINK = "https://t.me/gemzcoin_bot/playfun?startapp=eyJzIjoidGVsZWdyYW0iLCJtIjoiYm90IiwiZiI6ImJyb2FkY2FzdCJ9"
-SUPPORT_LINK = "https://t.me/Vipwinningsignals"
+SUPPORT_LINK = "t.me/Vipwinningsignals"
+
+ADMIN_ID = 1255929872  # Your ID
+AUTO_POST_INTERVAL = 3600  # seconds (3600 = 1 hour)
 # ==========================================
 
 bot = telebot.TeleBot(TOKEN)
 
-# ============ KEEP ALIVE (FOR RENDER FREE) ============
+# ============ KEEP ALIVE (RENDER FREE) ============
 app = Flask(__name__)
 
 @app.route('/')
@@ -35,7 +39,7 @@ def check_user(user_id):
     except:
         return False
 
-# ============ START COMMAND ============
+# ============ START ============
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = telebot.types.InlineKeyboardMarkup()
@@ -117,6 +121,54 @@ def callback(call):
             reply_markup=markup
         )
 
+# ============ MANUAL POST ============
+@bot.message_handler(commands=['post'])
+def post_to_channel(message):
+    if message.from_user.id != ADMIN_ID:
+        bot.reply_to(message, "❌ Not authorized")
+        return
+
+    text = message.text.replace("/post", "").strip()
+
+    if not text:
+        bot.reply_to(message, "Usage:\n/post Your message")
+        return
+
+    send_post(text)
+    bot.reply_to(message, "✅ Posted!")
+
+# ============ SEND POST FUNCTION ============
+def send_post(text):
+    markup = telebot.types.InlineKeyboardMarkup()
+    btn = telebot.types.InlineKeyboardButton("🎰 Play Now", url=AFFILIATE_LINK)
+    markup.add(btn)
+
+    bot.send_message(CHANNEL_USERNAME, text, reply_markup=markup)
+
+# ============ AUTO POSTING ============
+def auto_post():
+    while True:
+        try:
+            message = """🔥 HOT SIGNAL JUST DROPPED
+
+Win rate: 92% ✅  
+Limited window ⏳  
+
+Click below to activate 👇"""
+
+            send_post(message)
+            print("Auto post sent!")
+
+        except Exception as e:
+            print("Auto post error:", e)
+
+        time.sleep(AUTO_POST_INTERVAL)
+
+def start_auto_post():
+    t = Thread(target=auto_post)
+    t.start()
+
 # ============ RUN ============
 keep_alive()
+start_auto_post()
 bot.infinity_polling()
