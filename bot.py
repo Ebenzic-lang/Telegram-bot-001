@@ -1,4 +1,20 @@
+import os
+from flask import Flask
+from threading import Thread
 import telebot
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+def keep_alive():
+    t = Thread(target=run_web)
+    t.start()
 
 TOKEN = "8775829572:AAFjk7qEfh5-J3DMXDFrVD2gLJQ3TwKs6pg"
 CHANNEL_USERNAME = "@Vipwinningsignals"  # e.g @vipalerts
@@ -78,5 +94,5 @@ def callback(call):
             call.message.message_id,
             reply_markup=markup
         )
-
+keep_alive()
 bot.infinity_polling()
